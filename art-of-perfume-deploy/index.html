@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Art of Perfume | Descubre tu perfume ideal</title>
+    <meta name="description" content="Quiz interactivo de Art of Perfume. Descubre tu perfil olfativo y encuentra el perfume ideal según tu personalidad y estilo.">
+    <meta name="theme-color" content="#6a38c2">
+    <meta property="og:title" content="Art of Perfume | Quiz de Perfumes">
+    <meta property="og:description" content="Descubre tu perfil olfativo y encuentra el perfume ideal según tu personalidad.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="images/art-of-perfume-dupe.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fimgs.net">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+
+        body{
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            background:linear-gradient(160deg,#fbfaff 0%,#f3eeff 50%,#ece4ff 100%);
+            min-height:100vh;display:flex;justify-content:center;align-items:center;
+            padding:12px;overflow-x:hidden;color:#2d1b69;
+        }
+
+        /* ── ambient blobs ── */
+        body::before,body::after{
+            content:'';position:fixed;border-radius:50%;
+            pointer-events:none;filter:blur(90px);opacity:.12;z-index:0;
+        }
+        body::before{
+            width:400px;height:400px;
+            background:radial-gradient(circle,#7c3aed,transparent 70%);
+            top:-100px;right:-80px;
+            animation:drift 12s ease-in-out infinite alternate;
+        }
+        body::after{
+            width:350px;height:350px;
+            background:radial-gradient(circle,#a855f7,transparent 70%);
+            bottom:-80px;left:-60px;
+            animation:drift 15s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes drift{
+            0%{transform:translate(0,0) scale(1)}
+            100%{transform:translate(40px,-50px) scale(1.2)}
+        }
+
+        /* ── app container ── */
+        .app{
+            width:440px;max-width:100%;position:relative;z-index:1;
+            animation:appIn .7s cubic-bezier(.16,1,.3,1) both;
+        }
+        @keyframes appIn{
+            0%{opacity:0;transform:translateY(40px) scale(.95)}
+            100%{opacity:1;transform:none}
+        }
+        @keyframes float{
+            0%{transform:translateY(0)}
+            100%{transform:translateY(-6px)}
+        }
+
+        /* ── header ── */
+        .header{
+            text-align:center;padding:24px 20px 14px;
+            background:linear-gradient(180deg,rgba(245,240,255,.6),transparent);
+            position:relative;
+        }
+        .logo-wrap{
+            width:170px;height:170px;margin:0 auto 6px;
+            border-radius:50%;position:relative;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .logo-wrap::before{
+            content:'';position:absolute;inset:-4px;
+            border-radius:50%;
+            background:conic-gradient(from 0deg,#6a38c2,#9c5ef5,#c4b5fd,#9c5ef5,#6a38c2);
+            animation:logoSpin 4s linear infinite;
+            opacity:.6;
+        }
+        @keyframes logoSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+        .logo-wrap::after{
+            content:'';position:absolute;inset:0;
+            border-radius:50%;background:white;
+        }
+        .logo{
+            width:145px;height:145px;display:block;
+            border-radius:50%;object-fit:cover;
+            position:relative;z-index:1;
+            transition:transform .3s ease;
+        }
+        .logo:hover{transform:scale(1.05)}
+        .brand-name{
+            font-size:12px;font-weight:700;color:#6a38c2;
+            letter-spacing:2px;text-transform:uppercase;margin-top:2px;
+        }
+        .logo-placeholder{
+            font-size:1.4em;font-weight:800;color:#6a38c2;
+            letter-spacing:1px;text-align:center;
+        }
+
+        /* ── progress dots ── */
+        .dots{
+            display:flex;justify-content:center;gap:6px;padding:8px 0 4px;
+        }
+        .dot{
+            width:8px;height:8px;border-radius:50%;
+            background:rgba(106,56,194,.12);
+            transition:all .4s cubic-bezier(.4,0,.2,1);
+        }
+        .dot.active{
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            transform:scale(1.4);
+            box-shadow:0 0 12px rgba(156,94,245,.35);
+        }
+        .dot.done{background:#6a38c2}
+
+        /* ── card stack ── */
+        .card-stack{
+            position:relative;min-height:340px;
+            perspective:800px;margin:8px 0;
+        }
+
+        .quiz-card{
+            position:absolute;top:0;left:0;right:0;
+            background:rgba(255,255,255,.92);
+            backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+            border:1px solid rgba(106,56,194,.1);
+            border-radius:24px;padding:28px 22px 22px;
+            box-shadow:0 16px 48px rgba(106,56,194,.08),0 1px 3px rgba(106,56,194,.04);
+            transition:transform .15s ease,opacity .15s ease;
+            will-change:transform,opacity;
+        }
+        .quiz-card.behind{
+            transform:scale(.93) translateY(14px);
+            opacity:.35;pointer-events:none;
+            filter:blur(2px);
+        }
+
+        /* swipe animation */
+        @keyframes swipeRight{
+            0%{transform:translateX(0) rotate(0);opacity:1}
+            100%{transform:translateX(120%) rotate(18deg);opacity:0}
+        }
+        @keyframes swipeLeft{
+            0%{transform:translateX(0) rotate(0);opacity:1}
+            100%{transform:translateX(-120%) rotate(-18deg);opacity:0}
+        }
+        @keyframes cardEnter{
+            0%{transform:scale(.93) translateY(14px);opacity:.4;filter:blur(2px)}
+            100%{transform:scale(1) translateY(0);opacity:1;filter:blur(0)}
+        }
+        .quiz-card.swiping-right{animation:swipeRight .45s cubic-bezier(.4,0,.2,1) forwards}
+        .quiz-card.swiping-left{animation:swipeLeft .45s cubic-bezier(.4,0,.2,1) forwards}
+        .quiz-card.entering{animation:cardEnter .4s cubic-bezier(.16,1,.3,1) forwards}
+
+        .card-emoji{
+            font-size:2.4em;text-align:center;margin-bottom:8px;
+            filter:drop-shadow(0 2px 8px rgba(106,56,194,.1));
+            animation:float 3s ease-in-out infinite alternate;
+        }
+        @keyframes float{
+            0%{transform:translateY(0)}100%{transform:translateY(-6px)}
+        }
+
+        .card-question{
+            text-align:center;font-size:1.1em;font-weight:700;
+            color:#3a1d7a;margin-bottom:16px;line-height:1.4;
+            padding-bottom:14px;
+            border-bottom:1px solid rgba(106,56,194,.08);
+        }
+
+        .card-options{
+            display:grid;grid-template-columns:1fr 1fr;gap:8px;
+        }
+
+        .option-btn{
+            width:100%;padding:13px 12px;
+            border:1.5px solid rgba(106,56,194,.1);
+            border-radius:12px;
+            background:white;
+            color:#3a1d7a;font-family:inherit;font-size:13px;font-weight:600;
+            cursor:pointer;transition:all .2s cubic-bezier(.4,0,.2,1);
+            text-align:center;position:relative;overflow:hidden;
+            line-height:1.3;
+            box-shadow:0 2px 6px rgba(106,56,194,.04);
+        }
+        .option-btn:hover{
+            background:#f5f0ff;
+            border-color:#9c5ef5;
+            transform:translateY(-3px) scale(1.02);
+            box-shadow:0 6px 20px rgba(106,56,194,.12);
+        }
+        .option-btn:active{
+            transform:translateY(0) scale(.97);
+            background:#ede5ff;border-color:#6a38c2;
+        }
+
+        /* ── welcome screen ── */
+        .welcome{
+            text-align:center;
+            background:rgba(255,255,255,.9);
+            backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+            border:1px solid rgba(106,56,194,.05);
+            border-radius:28px;padding:52px 30px 44px;
+            box-shadow:0 24px 80px rgba(106,56,194,.06);
+        }
+        .welcome h1{
+            font-size:1.5em;font-weight:800;
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;margin-bottom:8px;letter-spacing:-.3px;
+        }
+        .welcome-divider{
+            width:40px;height:2px;margin:0 auto 14px;
+            background:linear-gradient(90deg,transparent,#9c5ef5,transparent);
+            border-radius:2px;
+        }
+        .welcome-sub{
+            color:#8a7ab5;font-size:13px;margin-bottom:36px;line-height:1.6;
+            font-weight:400;
+        }
+        .start-btn{
+            width:100%;padding:16px;border:none;border-radius:14px;
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            color:white;font-family:inherit;font-size:15px;font-weight:600;
+            cursor:pointer;letter-spacing:.5px;
+            box-shadow:0 6px 24px rgba(106,56,194,.3);
+            transition:all .3s cubic-bezier(.4,0,.2,1);
+            display:flex;align-items:center;justify-content:center;gap:8px;
+        }
+        .start-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 10px 35px rgba(106,56,194,.4);
+        }
+        .start-btn .arrow{
+            display:inline-block;transition:transform .3s;
+            font-size:1.1em;
+        }
+        .start-btn:hover .arrow{transform:translateX(5px)}
+
+        /* ── results ── */
+        @keyframes resultIn{
+            0%{opacity:0;transform:translateY(30px)}
+            100%{opacity:1;transform:none}
+        }
+        .results{animation:resultIn .6s cubic-bezier(.16,1,.3,1) both}
+
+        .profile-card{
+            background:linear-gradient(145deg,#f8f4ff,#ede5ff);
+            border:1px solid rgba(216,204,255,.6);
+            border-radius:22px;padding:24px 18px;margin-bottom:16px;
+            position:relative;overflow:hidden;
+        }
+        .profile-deco{
+            position:absolute;top:0;left:0;right:0;bottom:0;
+            pointer-events:none;overflow:hidden;
+            opacity:.08;font-size:2.2em;
+        }
+        .profile-deco span{
+            position:absolute;
+            animation:floatDeco 6s ease-in-out infinite alternate;
+        }
+        .profile-deco span:nth-child(1){top:8%;left:5%;animation-delay:0s}
+        .profile-deco span:nth-child(2){top:60%;right:8%;animation-delay:1s}
+        .profile-deco span:nth-child(3){bottom:10%;left:15%;animation-delay:2s}
+        .profile-deco span:nth-child(4){top:20%;right:20%;animation-delay:.5s}
+        .profile-deco span:nth-child(5){bottom:25%;right:5%;animation-delay:1.5s}
+        @keyframes floatDeco{
+            0%{transform:translateY(0) rotate(0deg)}
+            100%{transform:translateY(-8px) rotate(8deg)}
+        }
+        .profile-card h3{
+            text-align:center;font-size:1.2em;font-weight:800;
+            color:#3a1d7a;margin-bottom:10px;position:relative;z-index:1;
+        }
+        .profile-desc{
+            text-align:center;font-size:13px;color:#5a4a7a;
+            line-height:1.6;font-style:italic;margin-bottom:14px;
+            position:relative;z-index:1;
+        }
+        .profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:10px 0 4px;position:relative;z-index:1}
+        .stat{
+            background:rgba(255,255,255,.8);border-radius:10px;
+            padding:6px 8px;text-align:center;
+            border:1px solid rgba(106,56,194,.05);
+            box-shadow:0 1px 4px rgba(106,56,194,.04);
+            backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+        }
+        .stat-label{
+            font-size:8px;color:#8a7ab5;text-transform:uppercase;
+            letter-spacing:.7px;font-weight:700;
+        }
+        .stat-value{font-size:10px;color:#3a1d7a;margin-top:2px;font-weight:500;line-height:1.3}
+        .tip-text{
+            font-size:11px;color:#6a38c2;margin:10px 0 0;
+            text-align:center;position:relative;z-index:1;
+        }
+        .ref-label{
+            font-size:10px;color:#8a7ab5;text-align:center;
+            letter-spacing:1px;text-transform:uppercase;font-weight:600;
+            margin:16px 0 8px;opacity:.7;
+        }
+
+        /* ── perfume grid ── */
+        .perfume-grid{
+            display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;
+        }
+        .perfume-card{
+            background:white;border:1px solid rgba(106,56,194,.06);
+            border-radius:16px;padding:12px;text-align:center;
+            box-shadow:0 2px 10px rgba(106,56,194,.06);
+            transition:transform .3s,box-shadow .3s;
+        }
+        .perfume-card:hover{
+            transform:translateY(-4px);
+            box-shadow:0 8px 24px rgba(106,56,194,.12);
+        }
+        .perfume-card img{
+            width:100%;max-width:75px;margin:auto;display:block;
+            border-radius:8px;transition:transform .3s;
+        }
+        .perfume-card:hover img{transform:scale(1.06)}
+        .perfume-card h3{font-size:11px;margin:8px 0 2px;color:#3a1d7a;font-weight:600}
+        .perfume-card p{font-size:10px;color:#6b5b8a;margin:0 0 8px;line-height:1.3}
+        .buy-link{
+            display:block;background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            color:white;padding:7px;border-radius:8px;font-family:inherit;
+            font-size:10px;font-weight:600;text-decoration:none;text-align:center;
+            transition:all .2s;
+        }
+        .buy-link:hover{box-shadow:0 3px 12px rgba(106,56,194,.3);transform:translateY(-1px)}
+
+        /* ── dupe card ── */
+        .dupe-card{
+            grid-column:1/-1;
+            background:linear-gradient(145deg,#f8f4ff,#ede5ff);
+            border:2.5px solid #6a38c2;
+            border-radius:20px;padding:18px;text-align:center;
+            position:relative;overflow:hidden;
+            animation:dupeGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes dupeGlow{
+            0%{box-shadow:0 8px 25px rgba(106,56,194,.2)}
+            100%{box-shadow:0 12px 40px rgba(106,56,194,.35)}
+        }
+        .dupe-card::before{
+            content:'';position:absolute;top:-50%;left:-50%;
+            width:200%;height:200%;
+            background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.3) 50%,transparent 60%);
+            animation:shimmer 3.5s infinite;
+        }
+        @keyframes shimmer{
+            0%{transform:translateX(-100%) rotate(25deg)}
+            100%{transform:translateX(100%) rotate(25deg)}
+        }
+        .dupe-card img{
+            width:100%;max-width:200px;margin:auto;display:block;
+            border-radius:12px;position:relative;z-index:1;
+            transition:transform .3s;
+        }
+        .dupe-card:hover img{transform:scale(1.03)}
+        .dupe-card h3{font-size:14px;color:#3a1d7a;margin:10px 0 4px;position:relative;z-index:1;font-weight:700}
+        .dupe-card p{font-size:11px;color:#5a4a7a;margin:0 0 8px;position:relative;z-index:1}
+        .dupe-tag{
+            display:inline-block;
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            color:white;font-size:10px;font-weight:700;
+            padding:4px 14px;border-radius:20px;margin-bottom:8px;
+            position:relative;z-index:1;
+        }
+        .dupe-badge{
+            display:inline-block;
+            background:linear-gradient(135deg,#ff6b35,#ff8f5e);
+            color:white;font-size:9px;font-weight:700;
+            padding:3px 10px;border-radius:10px;margin-bottom:6px;
+            position:relative;z-index:1;
+        }
+        .dupe-price{font-size:12px;color:#6a38c2;font-weight:700;position:relative;z-index:1}
+        .buy-dupe{
+            display:inline-block;
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            color:white;border:none;padding:12px 24px;border-radius:12px;
+            font-family:inherit;font-size:13px;font-weight:700;
+            text-decoration:none;position:relative;z-index:1;cursor:pointer;
+            box-shadow:0 4px 18px rgba(106,56,194,.35);
+            transition:all .25s;
+        }
+        .buy-dupe:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 6px 25px rgba(106,56,194,.45)}
+
+        /* ── social icons ── */
+        .social-section{
+            text-align:center;margin-top:18px;position:relative;z-index:1;
+        }
+        .social-section p{
+            font-size:11px;color:#8a7ab5;font-weight:600;margin-bottom:10px;
+            letter-spacing:.5px;text-transform:uppercase;
+        }
+        .social-icons{display:flex;justify-content:center;gap:12px}
+        .social-icon{
+            display:flex;align-items:center;justify-content:center;
+            width:46px;height:46px;border-radius:14px;
+            text-decoration:none;transition:all .3s cubic-bezier(.4,0,.2,1);
+            box-shadow:0 3px 12px rgba(0,0,0,.08);
+        }
+        .social-icon:hover{
+            transform:translateY(-3px) scale(1.08);
+            box-shadow:0 6px 20px rgba(0,0,0,.15);
+        }
+        .social-icon.tiktok{background:#000}
+        .social-icon.instagram{background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)}
+        .social-icon svg{width:22px;height:22px;fill:white}
+
+        .restart-btn{
+            width:100%;padding:14px;margin-top:16px;border:none;
+            border-radius:14px;
+            background:linear-gradient(135deg,#6a38c2,#9c5ef5);
+            color:white;font-family:inherit;font-size:14px;font-weight:600;
+            cursor:pointer;transition:all .2s;
+            box-shadow:0 4px 15px rgba(106,56,194,.3);
+        }
+        .restart-btn:hover{box-shadow:0 6px 20px rgba(106,56,194,.4);transform:translateY(-1px)}
+
+        /* ── sparkles ── */
+        .sparkle{
+            position:fixed;pointer-events:none;z-index:9999;
+            border-radius:50%;
+            animation:sparkUp 1.2s ease-out forwards;
+        }
+        @keyframes sparkUp{
+            0%{opacity:1;transform:translateY(0) scale(1)}
+            100%{opacity:0;transform:translateY(-140px) scale(0)}
+        }
+
+        /* ── footer ── */
+        .footer{
+            text-align:center;padding:14px 0 4px;
+            font-size:10px;color:#b0a0d0;letter-spacing:.5px;
+        }
+        .footer a{color:#8a7ab5;text-decoration:none;font-weight:600}
+        .footer a:hover{color:#6a38c2}
+
+        /* ── responsive ── */
+        @media(max-width:480px){
+            body{padding:6px;align-items:flex-start}
+            .app{margin-top:4px}
+            .welcome{padding:28px 18px;border-radius:22px}
+            .welcome h1{font-size:1.3em}
+            .quiz-card{padding:22px 16px 18px;border-radius:20px}
+            .card-emoji{font-size:2.2em}
+            .card-question{font-size:1.05em}
+            .option-btn{padding:11px 14px;font-size:13px}
+            .profile-stats{grid-template-columns:1fr}
+            .perfume-grid{grid-template-columns:1fr;gap:10px}
+            .perfume-card img{max-width:100px}
+            .dupe-card img{max-width:150px}
+            .gender-grid{flex-direction:column}
+        }
+
+        @media(prefers-reduced-motion:reduce){
+            *,*::before,*::after{
+                animation-duration:.01ms!important;
+                transition-duration:.01ms!important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="logo-wrap">
+                <img class="logo" src="images/logo.jpg" alt="Art of Perfume"
+                     onerror="this.style.display='none';this.parentElement.nextElementSibling.style.display='block'">
+            </div>
+            <div class="brand-name">Art of Perfume</div>
+            <div class="logo-placeholder" style="display:none">✨ Art of Perfume ✨</div>
+        </div>
+        <div id="main"></div>
+        <div class="footer">Hecho con 💜 por <a href="https://www.tiktok.com/@artofperfumee?_r=1&_t=ZS-953q10CpmGC" target="_blank" rel="noopener">Art of Perfume</a></div>
+    </div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA — Questions, Profiles, Perfumes
+   ═══════════════════════════════════════════ */
+
+const questions = [
+    {
+        emoji: "🌍", q: "¿Qué lugar te recarga de energía?", options: [
+            { text: "🏖️ Una playa al amanecer", type: "citrico" },
+            { text: "🌺 Un jardín en plena floración", type: "floral" },
+            { text: "☕ Un café íntimo con buena compañía", type: "dulce" },
+            { text: "🌃 Una terraza de noche con vistas a la ciudad", type: "fuerte" },
+            { text: "🏕️ Un bosque en silencio absoluto", type: "amaderado" },
+            { text: "✈️ Un destino que aún no conoces", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "✨", q: "¿Cómo quieres sentirte cuando usas tu perfume?", options: [
+            { text: "⚡ Despierto y lleno de vitalidad", type: "citrico" },
+            { text: "🌸 Sensible y especial", type: "floral" },
+            { text: "🤗 Confortado y seguro", type: "dulce" },
+            { text: "💎 Audaz y memorable", type: "fuerte" },
+            { text: "🌿 Tranquilo y con presencia", type: "amaderado" },
+            { text: "🧭 Libre y sin ataduras", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "🕰️", q: "¿En qué momento del día te sientes en tu mejor versión?", options: [
+            { text: "☀️ Por la mañana, con energía y claridad", type: "citrico" },
+            { text: "🌷 A media mañana, con calma y luz suave", type: "floral" },
+            { text: "🌇 Por la tarde, cuando el ritmo se afloja", type: "dulce" },
+            { text: "🌙 De noche, cuando todo cobra intensidad", type: "fuerte" },
+            { text: "🌅 Al atardecer, en reflexión y silencio", type: "amaderado" },
+            { text: "💫 En cualquier punto de un viaje inesperado", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "🎨", q: "¿Qué paleta describe mejor tu estética personal?", options: [
+            { text: "💚 Blancos, verdes frescos y amarillos vivos", type: "citrico" },
+            { text: "🌸 Rosas, mauves y lilas suaves", type: "floral" },
+            { text: "🤍 Cremas, dorados y ámbar cálido", type: "dulce" },
+            { text: "🖤 Negros, borgoña y plateados", type: "fuerte" },
+            { text: "🤎 Ocres, tierra y verde oscuro", type: "amaderado" },
+            { text: "🩵 Azules, grises y blancos nítidos", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "🎵", q: "¿Qué música describe mejor tu energía?", options: [
+            { text: "🎸 Pop vibrante — alegre y contagioso", type: "citrico" },
+            { text: "🎻 Indie folk — delicado y emotivo", type: "floral" },
+            { text: "🎹 Jazz íntimo — cálido y sin prisa", type: "dulce" },
+            { text: "🎧 Electrónica oscura o R&B profundo", type: "fuerte" },
+            { text: "🪕 Acústico — envolvente y sin adornos", type: "amaderado" },
+            { text: "🌐 Lo que suene donde estés en el mundo", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "💬", q: "¿Cuál de estas frases te representa más?", options: [
+            { text: "\"La vida es demasiado corta para ir despacio\"", type: "citrico" },
+            { text: "\"Los detalles pequeños son los que importan\"", type: "floral" },
+            { text: "\"Me importan las personas, no las apariencias\"", type: "dulce" },
+            { text: "\"Entro a un lugar y lo tomo como propio\"", type: "fuerte" },
+            { text: "\"Prefiero la profundidad a la velocidad\"", type: "amaderado" },
+            { text: "\"Cada día puede ser el inicio de algo nuevo\"", type: "acuatico" }
+        ]
+    },
+    {
+        emoji: "💫", q: "¿Para qué situación eliges tu fragancia favorita?", options: [
+            { text: "🌤️ El día a día — fresco y sin esfuerzo", type: "citrico" },
+            { text: "💐 Una ocasión especial o un encuentro", type: "floral" },
+            { text: "🏙️ Trabajo, estudio o vida cotidiana", type: "dulce" },
+            { text: "🥂 Una noche importante o evento elegante", type: "fuerte" },
+            { text: "🍂 Una cena íntima o reunión cercana", type: "amaderado" },
+            { text: "🌏 Un viaje, festival o aventura", type: "acuatico" }
+        ]
+    }
+];
+
+const profiles = {
+    citrico: {
+        title: "🌊 Alma Fresca",
+        desc: "Eres una persona que irradia frescura y energía positiva. Tu personalidad vibrante y relajada atrae a los demás como un día soleado en la playa.",
+        notas: "Bergamota, Limón, Agua de Mar, Menta",
+        ocasion: "Día a día, trabajo, aire libre", estacion: "Primavera y Verano",
+        personalidad: "Optimista, Sociable, Aventurero/a",
+        tip: "Aplica en puntos de pulso y un toque en el cabello para que la frescura te acompañe todo el día.",
+        deco: ["🍋","🌿","🌊","🍊","🍃"]
+    },
+    floral: {
+        title: "🌸 Espíritu Romántico",
+        desc: "Tu esencia es delicada y encantadora. Tienes una sensibilidad especial que se refleja en tu forma de conectar con las personas.",
+        notas: "Rosa, Jazmín, Peonía, Gardenia",
+        ocasion: "Citas románticas, brunch, eventos", estacion: "Primavera",
+        personalidad: "Sensible, Elegante, Soñador/a",
+        tip: "Rocía en muñecas y detrás de las orejas. Un toque en el escote hará que la fragancia florezca con tu calor corporal.",
+        deco: ["🌸","🌹","🌺","🌷","🌼"]
+    },
+    dulce: {
+        title: "🍯 Esencia Irresistible",
+        desc: "Tu personalidad cálida y acogedora hace que todos se sientan bienvenidos. Eres como un abrazo reconfortante con un toque de sofisticación.",
+        notas: "Vainilla, Caramelo, Pralinée, Almizcle",
+        ocasion: "Oficina, reuniones, salidas casuales", estacion: "Otoño e Invierno",
+        personalidad: "Cariñoso/a, Confiable, Magnético/a",
+        tip: "Aplica en los puntos de pulso calientes: muñecas, cuello y detrás de las rodillas.",
+        deco: ["🍫","🍯","🧁","☕","🥐"]
+    },
+    fuerte: {
+        title: "🖤 Aura Poderosa",
+        desc: "Irradias poder y sofisticación. Tu presencia no pasa desapercibida. Eres alguien que sabe lo que quiere y lo consigue con estilo.",
+        notas: "Oud, Ámbar, Sándalo, Cuero",
+        ocasion: "Eventos elegantes, noches, galas", estacion: "Otoño e Invierno",
+        personalidad: "Decidido/a, Misterioso/a, Líder",
+        tip: "Menos es más. Un solo spray en el pecho y otro en la muñeca será suficiente para dejar huella.",
+        deco: ["🖤","🔥","✨","🌙","💎"]
+    },
+    amaderado: {
+        title: "🌿 Raíz Noble",
+        desc: "Tienes una presencia sofisticada y serena. Como un árbol milenario, transmites estabilidad, confianza y una elegancia atemporal.",
+        notas: "Cedro, Vetiver, Sándalo, Pachulí",
+        ocasion: "Reuniones, oficina, cenas íntimas", estacion: "Otoño y cualquier estación",
+        personalidad: "Reflexivo/a, Elegante, Confiable",
+        tip: "Aplica en el pecho y antebrazos. Las notas amaderadas se potencian con el calor corporal a lo largo del día.",
+        deco: ["🌲","🌿","🪵","🍂","🌾"]
+    },
+    acuatico: {
+        title: "✈️ Espíritu Libre",
+        desc: "Vives la vida sin fronteras, buscando experiencias nuevas y sensaciones únicas. Tu energía viajera y tu mente abierta te hacen inolvidable en cada lugar que pisas.",
+        notas: "Ozono, Almizcle Blanco, Neroli, Sal de Mar",
+        ocasion: "Viajes, festivales, el día a día aventurero", estacion: "Todo el año",
+        personalidad: "Viajero/a, Curioso/a, Adaptable",
+        tip: "Lleva un atomizador de viaje para reaplicar después de cada aventura. Las notas frescas se renuevan con cada aplicación.",
+        deco: ["✈️","🌍","🧭","⛵","🌅"]
+    }
+};
+
+const allPerfumes = {
+    citrico: [
+        { name: "Acqua di Gio", desc: "Marina fresca de Giorgio Armani", img: "https://fimgs.net/mdimg/perfume/375x500.410.jpg", link: "https://www.amazon.com.mx/s?k=Acqua+di+Gio+Armani" },
+        { name: "Light Blue D&G", desc: "Cítrico mediterráneo Dolce & Gabbana", img: "https://fimgs.net/mdimg/perfume/375x500.485.jpg", link: "https://www.amazon.com.mx/s?k=Light+Blue+Dolce+Gabbana" },
+        { name: "CK One", desc: "Icónico unisex cítrico y limpio", img: "https://fimgs.net/mdimg/perfume/375x500.396.jpg", link: "https://www.amazon.com.mx/s?k=CK+One+Calvin+Klein" },
+        { name: "Issey Miyake L'Eau", desc: "Fresca acuática, loto y ciclamen", img: "https://fimgs.net/mdimg/perfume/375x500.192.jpg", link: "https://www.amazon.com.mx/s?k=Issey+Miyake+Leau" }
+    ],
+    floral: [
+        { name: "Chance Eau Tendre", desc: "Floral afrutado de Chanel", img: "https://fimgs.net/mdimg/perfume/375x500.11522.jpg", link: "https://www.amazon.com.mx/s?k=Chanel+Chance+Eau+Tendre" },
+        { name: "Miss Dior Blooming", desc: "Peonía y sandía — Dior", img: "https://fimgs.net/mdimg/perfume/375x500.15801.jpg", link: "https://www.amazon.com.mx/s?k=Miss+Dior+Blooming+Bouquet" },
+        { name: "Gucci Bloom", desc: "Jazmín y tuberosa de Gucci", img: "https://fimgs.net/mdimg/perfume/375x500.47017.jpg", link: "https://www.amazon.com.mx/s?k=Gucci+Bloom" },
+        { name: "Jo Malone Peony Blush", desc: "Peonía, manzana roja y jazmín", img: "https://fimgs.net/mdimg/perfume/375x500.20021.jpg", link: "https://www.amazon.com.mx/s?k=Jo+Malone+Peony+Blush" }
+    ],
+    dulce: [
+        { name: "Black Opium", desc: "Café negro y vainilla — YSL", img: "https://fimgs.net/mdimg/perfume/375x500.25324.jpg", link: "https://www.amazon.com.mx/s?k=Black+Opium+YSL" },
+        { name: "La Vie Est Belle", desc: "Iris y pralinée de Lancôme", img: "https://fimgs.net/mdimg/perfume/375x500.14982.jpg", link: "https://www.amazon.com.mx/s?k=La+Vie+Est+Belle+Lancome" },
+        { name: "Good Girl", desc: "Almendra, jazmín y cacao — CH", img: "https://fimgs.net/mdimg/perfume/375x500.39681.jpg", link: "https://www.amazon.com.mx/s?k=Good+Girl+Carolina+Herrera" },
+        { name: "Ariana Grande Cloud", desc: "Lavanda y coco cremoso", img: "https://fimgs.net/mdimg/perfume/375x500.52837.jpg", link: "https://www.amazon.com.mx/s?k=Ariana+Grande+Cloud" }
+    ],
+    fuerte: [
+        { name: "Dior Sauvage", desc: "Ambroxán y bergamota — Dior", img: "https://fimgs.net/mdimg/perfume/375x500.31861.jpg", link: "https://www.amazon.com.mx/s?k=Dior+Sauvage" },
+        { name: "Bleu de Chanel", desc: "Cedro y sándalo de Chanel", img: "https://fimgs.net/mdimg/perfume/375x500.9099.jpg", link: "https://www.amazon.com.mx/s?k=Bleu+de+Chanel" },
+        { name: "Baccarat Rouge 540", desc: "Jazmín y cedro — Maison FK", img: "https://fimgs.net/mdimg/perfume/375x500.54277.jpg", link: "https://www.amazon.com.mx/s?k=Baccarat+Rouge+540" },
+        { name: "Tom Ford Oud Wood", desc: "Oud y sándalo exótico", img: "https://fimgs.net/mdimg/perfume/375x500.1826.jpg", link: "https://www.amazon.com.mx/s?k=Tom+Ford+Oud+Wood" }
+    ],
+    amaderado: [
+        { name: "Terre d'Hermès", desc: "Naranja, cedro y silex", img: "https://fimgs.net/mdimg/perfume/375x500.1577.jpg", link: "https://www.amazon.com.mx/s?k=Terre+d+Hermes" },
+        { name: "Santal 33", desc: "Sándalo y cuero — Le Labo", img: "https://fimgs.net/mdimg/perfume/375x500.16819.jpg", link: "https://www.amazon.com.mx/s?k=Santal+33+Le+Labo" },
+        { name: "Byredo Gypsy Water", desc: "Pino, sándalo y vainilla", img: "https://fimgs.net/mdimg/perfume/375x500.5765.jpg", link: "https://www.amazon.com.mx/s?k=Byredo+Gypsy+Water" },
+        { name: "Coco Mademoiselle", desc: "Pachulí, vetiver — Chanel", img: "https://fimgs.net/mdimg/perfume/375x500.611.jpg", link: "https://www.amazon.com.mx/s?k=Coco+Mademoiselle+Chanel" }
+    ],
+    acuatico: [
+        { name: "Acqua di Gio Profondo", desc: "Ámbar acuático — Armani", img: "https://fimgs.net/mdimg/perfume/375x500.60214.jpg", link: "https://www.amazon.com.mx/s?k=Acqua+di+Gio+Profondo" },
+        { name: "Versace Pour Homme", desc: "Ámbar marino y salvia", img: "https://fimgs.net/mdimg/perfume/375x500.2572.jpg", link: "https://www.amazon.com.mx/s?k=Versace+Pour+Homme" },
+        { name: "Davidoff Cool Water", desc: "El clásico acuático atemporal", img: "https://fimgs.net/mdimg/perfume/375x500.507.jpg", link: "https://www.amazon.com.mx/s?k=Davidoff+Cool+Water" },
+        { name: "Bleu de Chanel EDT", desc: "Menta, pomelo y cedro", img: "https://fimgs.net/mdimg/perfume/375x500.9099.jpg", link: "https://www.amazon.com.mx/s?k=Bleu+de+Chanel+EDT" }
+    ]
+};
+
+const dupeNames = {
+    citrico: "Solsticio", floral: "Séraphine", dulce: "Ambrée",
+    fuerte: "Obsidian", amaderado: "Terra Nobile", acuatico: "Deriva"
+};
+const dupeDescs = {
+    citrico: "Frescura marina que despierta tus sentidos — bergamota, brisa oceánica y un alma libre que no pasa desapercibida.",
+    floral: "Un jardín en plena floración capturado en un frasco — romántico, delicado e irresistiblemente femenino.",
+    dulce: "Calidez que envuelve, seduce sin esfuerzo — vainilla, caramelo y un magnetismo que todos quieren recordar.",
+    fuerte: "Poder en cada gota — oud oscuro, ámbar y una presencia que domina la habitación antes de que digas una palabra.",
+    amaderado: "Elegancia atemporal enraizada en la tierra — cedro, sándalo y la sofisticación de quien nunca necesita demostrar nada.",
+    acuatico: "Libertad embotellada — ozono, neroli y la esencia del viajero que lleva el mundo entero en sus pulmones."
+};
+const DUPE_IMG = "images/art-of-perfume-dupe.jpg";
+const SHOP_LINK = "https://www.tiktok.com/@artofperfumee?_r=1&_t=ZS-953q10CpmGC";
+const INSTAGRAM = "https://www.instagram.com/artofperfumemx?igsh=bnV3YWZnajdzbzJk";
+const TIKTOK_SVG = '<svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.51a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.98a8.21 8.21 0 0 0 4.76 1.52V7.05a4.84 4.84 0 0 1-1-.36z"/></svg>';
+const INSTA_SVG = '<svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>';
+
+/* ═══════════════════════════════════════════
+   GAME STATE
+   ═══════════════════════════════════════════ */
+
+let qIndex = 0;
+let score = { citrico:0, floral:0, dulce:0, fuerte:0, amaderado:0, acuatico:0 };
+const main = document.getElementById("main");
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
+
+/* ═══════════════════════════════════════════
+   WELCOME SCREEN
+   ═══════════════════════════════════════════ */
+
+function showWelcome(){
+    main.innerHTML = `
+        <div class="welcome">
+            <h1>Tu Perfume, Tu Identidad</h1>
+            <div class="welcome-divider"></div>
+            <p class="welcome-sub">7 preguntas. Un perfil único.<br>Descubre cuál es la tuya con Art of Perfume.</p>
+            <button class="start-btn" onclick="showCard()">Empezar Quiz <span class="arrow">→</span></button>
+        </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   CARD UI
+   ═══════════════════════════════════════════ */
+
+function renderDots(){
+    let d = '<div class="dots">';
+    for(let i=0;i<questions.length;i++){
+        let cls = i < qIndex ? 'dot done' : i === qIndex ? 'dot active' : 'dot';
+        d += '<div class="'+cls+'"></div>';
+    }
+    d += '</div>';
+    return d;
+}
+
+function showCard(){
+    const q = questions[qIndex];
+    const nextQ = questions[qIndex + 1];
+
+    let behind = '';
+    if(nextQ){
+        behind = `<div class="quiz-card behind">
+            <div class="card-emoji">${nextQ.emoji}</div>
+            <div class="card-question">${nextQ.q}</div>
+        </div>`;
+    }
+
+    let opts = '';
+    q.options.forEach(function(o){
+        opts += `<button class="option-btn" onclick="answer('${o.type}')">${o.text}</button>`;
+    });
+
+    main.innerHTML = renderDots() + `
+        <div class="card-stack">
+            ${behind}
+            <div class="quiz-card entering" id="activeCard">
+                <div class="card-emoji">${q.emoji}</div>
+                <div class="card-question">${q.q}</div>
+                <div class="card-options">${opts}</div>
+            </div>
+        </div>`;
+}
+
+function answer(type){
+    score[type]++;
+    const card = document.getElementById("activeCard");
+    if(!card) return;
+
+    // disable buttons
+    card.querySelectorAll('.option-btn').forEach(function(b){b.disabled=true});
+
+    // random swipe direction
+    const dir = Math.random() > 0.5 ? 'swiping-right' : 'swiping-left';
+    card.classList.remove('entering');
+    card.classList.add(dir);
+
+    setTimeout(function(){
+        qIndex++;
+        if(qIndex < questions.length){
+            showCard();
+        } else {
+            showResult();
+        }
+    }, 400);
+}
+
+/* ═══════════════════════════════════════════
+   SPARKLES
+   ═══════════════════════════════════════════ */
+
+function sparkles(){
+    const cols = ['#7c3aed','#a855f7','#c4b5fd','#f97316','#fbbf24','#ec4899'];
+    for(let i=0;i<25;i++){
+        setTimeout(function(){
+            const s = document.createElement('div');
+            s.className='sparkle';
+            const sz = Math.random()*10+4;
+            s.style.cssText = 'width:'+sz+'px;height:'+sz+'px;background:'+cols[Math.floor(Math.random()*cols.length)]+
+                ';left:'+(Math.random()*100)+'vw;top:'+(Math.random()*70+15)+'vh';
+            document.body.appendChild(s);
+            setTimeout(function(){s.remove()},1200);
+        }, i*60);
+    }
+}
+
+/* ═══════════════════════════════════════════
+   RESULTS
+   ═══════════════════════════════════════════ */
+
+function showResult(){
+    sparkles();
+    const result = Object.keys(score).reduce(function(a,b){return score[a]>score[b]?a:b});
+    const p = profiles[result];
+
+    const picked = allPerfumes[result].slice(0,4);
+
+    let html = '<div class="results">';
+
+    // profile card with thematic decorations
+    let decoHtml = '<div class="profile-deco">';
+    if(p.deco){
+        p.deco.forEach(function(e){ decoHtml += '<span>'+e+'</span>'; });
+    }
+    decoHtml += '</div>';
+
+    html += '<div class="profile-card">'
+        +decoHtml
+        +'<h3>'+p.title+'</h3>'
+        +'<p class="profile-desc">'+p.desc+'</p>'
+        +'<div class="profile-stats">'
+        +'<div class="stat"><div class="stat-label">🎵 Notas</div><div class="stat-value">'+p.notas+'</div></div>'
+        +'<div class="stat"><div class="stat-label">📅 Ocasión</div><div class="stat-value">'+p.ocasion+'</div></div>'
+        +'<div class="stat"><div class="stat-label">🌤️ Estación</div><div class="stat-value">'+p.estacion+'</div></div>'
+        +'<div class="stat"><div class="stat-label">💎 Personalidad</div><div class="stat-value">'+p.personalidad+'</div></div>'
+        +'</div>'
+        +'<p class="tip-text"><strong>💡 Tip:</strong> '+p.tip+'</p>'
+        +'</div>';
+
+    // perfume grid with dupe
+    html += '<p class="ref-label">✦ Perfumes de referencia en su categoría</p>';
+    html += '<div class="perfume-grid">'
+        +'<div class="dupe-card">'
+        +'<span class="dupe-badge">🏆 RECOMENDACIÓN #1</span><br>'
+        +'<span class="dupe-tag">✨ Recomendado por Art of Perfume</span>'
+        +'<img src="'+DUPE_IMG+'" alt="'+dupeNames[result]+' – Art of Perfume" onerror="this.style.background=\'linear-gradient(135deg,#6a38c2,#9c5ef5)\';this.style.height=\'100px\'">'
+        +'<h3>🌟 '+dupeNames[result]+' — Art of Perfume</h3>'
+        +'<p>'+dupeDescs[result]+'</p>'
+        +'<p class="dupe-price">💰 Misma fragancia, fracción del precio</p>'
+        +'<a class="buy-dupe" href="'+SHOP_LINK+'" target="_blank" rel="noopener">🛍️ Comprar Ahora →</a>'
+        +'<div class="social-section">'
+        +'<p>Síguenos</p>'
+        +'<div class="social-icons">'
+        +'<a class="social-icon tiktok" href="'+SHOP_LINK+'" target="_blank" rel="noopener" title="TikTok">'+TIKTOK_SVG+'</a>'
+        +'<a class="social-icon instagram" href="'+INSTAGRAM+'" target="_blank" rel="noopener" title="Instagram">'+INSTA_SVG+'</a>'
+        +'</div></div>'
+        +'</div>';
+
+    picked.forEach(function(x){
+        html += '<div class="perfume-card">'
+            +'<img src="'+x.img+'" alt="'+x.name+'" onerror="this.style.background=\'rgba(106,56,194,.1)\';this.style.height=\'70px\'">'
+            +'<h3>'+x.name+'</h3>'
+            +'<p>'+x.desc+'</p>'
+            +'<a class="buy-link" href="'+x.link+'" target="_blank" rel="noopener">🛒 Ver en tienda</a>'
+            +'</div>';
+    });
+
+    html += '</div>';
+    html += '<button class="restart-btn" onclick="location.reload()">🔄 Reiniciar Quiz</button>';
+    html += '</div>';
+
+    main.innerHTML = html;
+    main.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ── INIT ── */
+showWelcome();
+</script>
+</body>
+</html>
